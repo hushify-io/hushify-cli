@@ -1,13 +1,13 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Install hushify CLI on Linux from GitHub releases.
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/hushify-io/hushify-cli/main/install.sh | bash
+#   curl -fsSL https://www.hushify.io/install | sh
 #
 # Optional env:
 #   VERSION   release version without leading v (default: latest)
 #   PREFIX    install prefix (default: /usr/local or ~/.local)
 #   BIN_DIR   install directory for the binary (overrides PREFIX/bin)
-set -euo pipefail
+set -eu
 
 REPO="hushify-io/hushify-cli"
 BASE_URL="https://github.com/${REPO}/releases"
@@ -21,33 +21,33 @@ need_cmd() {
 }
 
 detect_arch() {
-  local arch
   arch="$(uname -m)"
   case "$arch" in
-    x86_64 | amd64) echo amd64 ;;
-    aarch64 | arm64) echo arm64 ;;
+    x86_64|amd64) echo amd64 ;;
+    aarch64|arm64) echo arm64 ;;
     *) die "unsupported architecture: $arch (need amd64 or arm64)" ;;
   esac
 }
 
 latest_version() {
-  local json tag
   json="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest")"
-  tag="$(printf '%s\n' "$json" | grep -o '"tag_name":[[:space:]]*"[^"]*"' | head -1 | cut -d'"' -f4)"
-  [[ -n "$tag" ]] || die "could not determine latest release version"
+  tag="$(printf '%s\n' "$json" | grep -o '"tag_name":[[:space:]]*"[^"]*"' | head -n 1 | cut -d'"' -f4)"
+  if [ -z "$tag" ]; then
+    die "could not determine latest release version"
+  fi
   printf '%s\n' "${tag#v}"
 }
 
 install_dir() {
-  if [[ -n "${BIN_DIR:-}" ]]; then
+  if [ -n "${BIN_DIR:-}" ]; then
     printf '%s\n' "$BIN_DIR"
     return
   fi
-  if [[ -n "${PREFIX:-}" ]]; then
+  if [ -n "${PREFIX:-}" ]; then
     printf '%s\n' "${PREFIX%/}/bin"
     return
   fi
-  if [[ "$(id -u)" -eq 0 ]] || [[ -w /usr/local/bin ]]; then
+  if [ "$(id -u)" -eq 0 ] || [ -w /usr/local/bin ]; then
     printf '%s\n' /usr/local/bin
     return
   fi
@@ -58,7 +58,7 @@ install_dir() {
 INSTALL_TMPDIR=""
 
 cleanup() {
-  if [[ -n "${INSTALL_TMPDIR}" ]]; then
+  if [ -n "${INSTALL_TMPDIR}" ]; then
     rm -rf "${INSTALL_TMPDIR}"
   fi
 }
@@ -69,11 +69,11 @@ main() {
   need_cmd mktemp
   need_cmd install
 
-  local os
   os="$(uname -s | tr '[:upper:]' '[:lower:]')"
-  [[ "$os" == linux ]] || die "this installer supports Linux only (detected: $os)"
+  if [ "$os" != linux ]; then
+    die "this installer supports Linux only (detected: $os)"
+  fi
 
-  local arch version dest asset binary expected
   arch="$(detect_arch)"
   version="${VERSION:-$(latest_version)}"
   version="${version#v}"
@@ -89,7 +89,9 @@ main() {
   curl -fsSL "${BASE_URL}/download/v${version}/checksums.txt" -o "${INSTALL_TMPDIR}/checksums.txt"
 
   expected="$(grep -E "[[:space:]]${asset}$" "${INSTALL_TMPDIR}/checksums.txt" | awk '{print $1}')"
-  [[ -n "$expected" ]] || die "checksum not found for ${asset}"
+  if [ -z "$expected" ]; then
+    die "checksum not found for ${asset}"
+  fi
 
   if command -v sha256sum >/dev/null 2>&1; then
     printf '%s  %s\n' "$expected" "${INSTALL_TMPDIR}/${asset}" | sha256sum -c - >/dev/null
@@ -101,7 +103,7 @@ main() {
 
   mkdir -p "$dest"
   binary="${dest}/hushify"
-  if [[ -w "$dest" ]]; then
+  if [ -w "$dest" ]; then
     install -m 755 "${INSTALL_TMPDIR}/${asset}" "$binary"
   else
     need_cmd sudo
