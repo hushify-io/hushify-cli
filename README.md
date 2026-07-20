@@ -55,7 +55,7 @@ go build -o hushify .
 Or install directly:
 
 ```bash
-go install github.com/nvteh/hushify.io/cli@latest
+go install github.com/hushify-io/hushify-cli@latest
 ```
 
 ## Usage

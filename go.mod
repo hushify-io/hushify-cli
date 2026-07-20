@@ -1,3 +1,3 @@
-module github.com/nvteh/hushify.io/cli
+module github.com/hushify-io/hushify-cli
 
 go 1.23
