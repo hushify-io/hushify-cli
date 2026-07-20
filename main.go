@@ -20,8 +20,10 @@ const (
 	defaultTTL = "1h"
 	maxLinks   = 10
 	maxTTLDays = 32
-	version    = "1.0.0"
 )
+
+// Overridden at release time via -ldflags "-X main.version=...".
+var version = "dev"
 
 var ttlPattern = regexp.MustCompile(`^(\d+)([smhd])$`)
 
