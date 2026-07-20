@@ -91,3 +91,29 @@ jobs:
             args+=(--prerelease)
           fi
           gh release create "${args[@]}"
+
+      - name: Update Homebrew tap
+        if: ${{ inputs.prerelease == false }}
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [[ -z "${GH_TOKEN}" ]]; then
+            echo "HOMEBREW_TAP_TOKEN is not set; skipping tap update"
+            exit 0
+          fi
+          tap_dir="${RUNNER_TEMP}/homebrew-brew-tools"
+          gh repo clone nvteh/homebrew-brew-tools "$tap_dir"
+          ./scripts/update-homebrew-formula.sh \
+            "$VERSION" \
+            dist/checksums.txt \
+            "$tap_dir/Formula/hushify.rb"
+          cd "$tap_dir"
+          if git diff --quiet; then
+            echo "Homebrew formula already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/hushify.rb
+          git commit -m "chore(hushify): update formula to v${VERSION}"
+          git push origin HEAD

@@ -29,11 +29,26 @@ Secrets are one-time: after a successful unwrap (or TTL expiry), the link no lon
 
 ## Install
 
+### Homebrew
+
+```bash
+brew tap nvteh/brew-tools
+brew install hushify
+```
+
+Or in one step:
+
+```bash
+brew install nvteh/brew-tools/hushify
+```
+
+### From source
+
 Requires [Go 1.23+](https://go.dev/dl/).
 
 ```bash
-git clone https://github.com/nvteh/hushify.io/cli.git
-cd cli
+git clone https://github.com/hushify-io/hushify-cli.git
+cd hushify-cli
 go build -o hushify .
 ```
 
