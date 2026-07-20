@@ -54,6 +54,15 @@ install_dir() {
   printf '%s\n' "${HOME}/.local/bin"
 }
 
+# Must be global: EXIT traps run after main() returns, so locals are gone.
+INSTALL_TMPDIR=""
+
+cleanup() {
+  if [[ -n "${INSTALL_TMPDIR}" ]]; then
+    rm -rf "${INSTALL_TMPDIR}"
+  fi
+}
+
 main() {
   need_cmd curl
   need_cmd uname
@@ -64,7 +73,7 @@ main() {
   os="$(uname -s | tr '[:upper:]' '[:lower:]')"
   [[ "$os" == linux ]] || die "this installer supports Linux only (detected: $os)"
 
-  local arch version dest asset tmpdir binary checksums expected
+  local arch version dest asset binary expected
   arch="$(detect_arch)"
   version="${VERSION:-$(latest_version)}"
   version="${version#v}"
@@ -73,19 +82,19 @@ main() {
 
   info "Installing hushify ${version} (${arch}) to ${dest}"
 
-  tmpdir="$(mktemp -d)"
-  trap 'rm -rf "$tmpdir"' EXIT
+  INSTALL_TMPDIR="$(mktemp -d)"
+  trap cleanup EXIT
 
-  curl -fsSL "${BASE_URL}/download/v${version}/${asset}" -o "${tmpdir}/${asset}"
-  curl -fsSL "${BASE_URL}/download/v${version}/checksums.txt" -o "${tmpdir}/checksums.txt"
+  curl -fsSL "${BASE_URL}/download/v${version}/${asset}" -o "${INSTALL_TMPDIR}/${asset}"
+  curl -fsSL "${BASE_URL}/download/v${version}/checksums.txt" -o "${INSTALL_TMPDIR}/checksums.txt"
 
-  expected="$(grep -E "[[:space:]]${asset}$" "${tmpdir}/checksums.txt" | awk '{print $1}')"
+  expected="$(grep -E "[[:space:]]${asset}$" "${INSTALL_TMPDIR}/checksums.txt" | awk '{print $1}')"
   [[ -n "$expected" ]] || die "checksum not found for ${asset}"
 
   if command -v sha256sum >/dev/null 2>&1; then
-    printf '%s  %s\n' "$expected" "${tmpdir}/${asset}" | sha256sum -c - >/dev/null
+    printf '%s  %s\n' "$expected" "${INSTALL_TMPDIR}/${asset}" | sha256sum -c - >/dev/null
   elif command -v shasum >/dev/null 2>&1; then
-    printf '%s  %s\n' "$expected" "${tmpdir}/${asset}" | shasum -a 256 -c - >/dev/null
+    printf '%s  %s\n' "$expected" "${INSTALL_TMPDIR}/${asset}" | shasum -a 256 -c - >/dev/null
   else
     die "missing sha256sum or shasum for checksum verification"
   fi
@@ -93,10 +102,10 @@ main() {
   mkdir -p "$dest"
   binary="${dest}/hushify"
   if [[ -w "$dest" ]]; then
-    install -m 755 "${tmpdir}/${asset}" "$binary"
+    install -m 755 "${INSTALL_TMPDIR}/${asset}" "$binary"
   else
     need_cmd sudo
-    sudo install -m 755 "${tmpdir}/${asset}" "$binary"
+    sudo install -m 755 "${INSTALL_TMPDIR}/${asset}" "$binary"
   fi
 
   info "Installed ${binary}"
