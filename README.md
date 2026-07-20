@@ -29,7 +29,25 @@ Secrets are one-time: after a successful unwrap (or TTL expiry), the link no lon
 
 ## Install
 
-### Homebrew
+### Linux
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hushify-io/hushify-cli/main/install.sh | bash
+```
+
+Installs the latest release into `/usr/local/bin` when writable, otherwise `~/.local/bin`.
+
+Optional:
+
+```bash
+# Pin a version
+curl -fsSL https://raw.githubusercontent.com/hushify-io/hushify-cli/main/install.sh | VERSION=0.0.3 bash
+
+# Custom install location
+curl -fsSL https://raw.githubusercontent.com/hushify-io/hushify-cli/main/install.sh | PREFIX=$HOME/.local bash
+```
+
+### Homebrew (macOS / Linux)
 
 ```bash
 brew tap nvteh/brew-tools
