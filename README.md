@@ -31,20 +31,20 @@ Secrets are one-time: after a successful unwrap (or TTL expiry), the link no lon
 
 ### Linux
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/hushify-io/hushify-cli/main/install.sh | bash
+```sh
+curl -fsSL https://www.hushify.io/install | sh
 ```
 
 Installs the latest release into `/usr/local/bin` when writable, otherwise `~/.local/bin`.
 
 Optional:
 
-```bash
+```sh
 # Pin a version
-curl -fsSL https://raw.githubusercontent.com/hushify-io/hushify-cli/main/install.sh | VERSION=0.0.3 bash
+curl -fsSL https://www.hushify.io/install | VERSION=0.0.3 sh
 
 # Custom install location
-curl -fsSL https://raw.githubusercontent.com/hushify-io/hushify-cli/main/install.sh | PREFIX=$HOME/.local bash
+curl -fsSL https://www.hushify.io/install | PREFIX=$HOME/.local sh
 ```
 
 ### Homebrew (macOS / Linux)
